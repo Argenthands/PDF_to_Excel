@@ -1,0 +1,42 @@
+claramente estamos depurando mal
+Procesando
+Página 1 procesada
+...
+
+
+Página 42 procesada
+Texto extraído
+Texto depurado correctamente.
+Texto depurado:
+Hoja............: 44
+Fecha de Emision: 20/10/2023
+Sucursal .......: RREESSIISSTTEENNCCIIAA
+PPIIEEDDRRAABBUUEENNAA MMAARRIIAA JJUULLIIAA Fecha Desde.....: 1/01/2020
+CCOONNCCEEPPCCIIOONN DDEELL BBEERRMMEEJJOO 11330000 Tipo de cuenta..: CCAAJJAA DDEE AAHHOORRRROOSS
+33550000 RREESSIISSTTEENNCCIIAA Nro de Cuenta ..: 4488551122//0088
+Moneda .........: PPEESSOOSS
+Resúmen en......: PPEESSOOSS
+CUIT / CUIL ....: 2277--1177664422117744--11
+C.B.U. ........: 3311110000330022--1111000000004488551122008800
+Cantidad de titulares .......: 11 Saldo inicial...: 0,00
+PPIIEEDDRRAABBUUEENNAA MMAARRIIAA JJUULLIIAA 2277--1177664422117744--11
+TTrraannssppoorrttee hhoojjaa aanntteerriioorr 4433 2200..660077,,2288
+Texto depurado
+Total de movimientos extraídos: 0
+Movimientos procesados
+Archivo Excel generado: extracto_bancario.xlsx
+Proceso completado
+las letras repetidas implican que se estan copiando una y otra vez en el depurado la misma letra dentro de un mismo ciclo. a su vez la condicion para copiar esta mal.
+Vamos a empezar denuevo.
+Sabemos que antes de cada bloque de informacion util este entre
+_________________________________________________________________________________________________________________
+FECHA DETALLE DEL MOVIMIENTO COMPROBANTE DEBITO CREDITO SALDO
+luego hay un renglon en blanco seguido de otro
+_________________________________________________________________________________________________________________
+aqui comienza la informacion util que en la mayoria de los casos las lineas comienzan con una fecha y termina con un * pero hay casos en los que el contenido es del tipo
+CUIT Destino: 27183734127 Descripción: GOYCOECHEA SILVINA       Ref.:  VARVAR
+o del tipo 
+Originante: VARISCO PAOLA NO  CUIT/CUIL/DNI: 27273247101  Ref.: VARVARvarisco
+luego del extracto util viene otra
+_________________________________________________________________________________________________________________
+y volvemos a tener informacion inutl hasta que se repeti el patron.
