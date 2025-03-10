@@ -10,6 +10,5 @@ if __name__ == "__main__":
 
     texto = extraer_texto(pdf_path)
     texto_depurado = depurar_texto(texto)
-    print(texto_depurado)
-    #movimientos = procesar_movimientos(texto_depurado)
-    #generar_excel(movimientos, output_excel)
+    movimientos = procesar_movimientos(texto_depurado)
+    generar_excel(movimientos, output_excel)

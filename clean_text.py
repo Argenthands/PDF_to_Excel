@@ -1,27 +1,35 @@
 import re
 
 def depurar_texto(texto):
+    """
+    Depura el texto eliminando encabezados de página y dejando solo los movimientos bancarios.
+    """
     SplitLine = '_________________________________________________________________________________________________________________'
     bloques = texto.split(SplitLine)
-    patron_fecha = re.compile(r'\d{1,2}/\d{1,2}/\d{4}')  # Permitir fechas con 1 o 2 dígitos en día/mes
-    patron_cabecera = re.compile(r'FECHA\s+DETALLE\s+DEL\s+MOVIMIENTO')
+    patron_fecha = re.compile(r'\d{1,2}/\d{1,2}/\d{4}')  # Fechas tipo DD/MM/AAAA
 
     informacion_util = []
 
     for bloque in bloques:
         lineas = bloque.split('\n')
+        i = 0
+        while i < len(lineas):
+            linea = lineas[i].strip()
 
-        # Buscar la cabecera en cualquier línea del bloque
-        cabecera_encontrada = any(patron_cabecera.search(linea) for linea in lineas)
+            # Detecta si inicia una cabecera de página
+            if linea.startswith("Hoja............:"):
+                # Buscar la línea "Transporte hoja anterior" o saltar hasta el final de la cabecera
+                while i < len(lineas) and "Transporte hoja anterior" not in lineas[i]:
+                    i += 1
+                i += 1  # Saltar la línea "Transporte hoja anterior"
+                continue  
 
-        if cabecera_encontrada:
-            for linea in lineas:
-                linea = re.sub(r'([A-Z])\1+', r'\1', linea)  # Corrige caracteres duplicados
-                linea = re.sub(r'\s+', ' ', linea).strip()  # Elimina espacios extra
-                
-                if patron_fecha.search(linea):  # Si la línea contiene una fecha
-                    informacion_util.append(linea)
-                elif "CUIT Destino:" in linea or "Originante:" in linea:
-                    informacion_util.append(linea)
+            # Filtramos solo los movimientos bancarios
+            if patron_fecha.search(linea):  
+                informacion_util.append(linea)
+            elif "CUIT Destino:" in linea or "Originante:" in linea:
+                informacion_util.append(linea)
+
+            i += 1  # Avanzar en la lista de líneas
 
     return '\n'.join(informacion_util)
