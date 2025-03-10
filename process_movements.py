@@ -1,31 +1,64 @@
 import re
 
 def procesar_movimientos(texto):
-    """ Procesa el texto depurado para identificar correctamente los movimientos bancarios. """
+    """
+    Procesa el texto depurado para identificar correctamente los movimientos bancarios.
+    Esta versión usa expresiones regulares para extraer bloques de movimientos
+    que comienzan con una fecha y terminan con un asterisco (*).
+    """
     movimientos = []
-    fecha_regex = re.compile(r"^\d{1,2}/\d{1,2}/\d{4}$")  # Fecha al inicio de la línea
-    detalle_extra_regex = re.compile(r"(CUIT Destino:|Originante:)")  # Líneas de detalles adicionales
-
-    for line in texto.split("\n"):
-        line = line.strip()
-        cols = line.split()
-
-        # Si hay suficientes columnas y la primera es una fecha, y la línea termina en '*'
-        if len(cols) > 5 and fecha_regex.match(cols[0]) and cols[-1] == "*":
-            fecha = cols[0]
-            detalle = " ".join(cols[1:-4])  # Todo hasta antes de los 3 últimos valores
-            try:
-                debito = float(cols[-4].replace(".", "").replace(",", ".")) if cols[-4] != "0,00" else None
-                credito = float(cols[-3].replace(".", "").replace(",", ".")) if cols[-3] != "0,00" else None
-                saldo = float(cols[-2].replace(".", "").replace(",", "."))  # Último número antes del '*'
-            except ValueError:
-                debito, credito, saldo = None, None, None  # En caso de error, asignamos None
-
-            movimientos.append([fecha, detalle, "", debito, credito, saldo])  # Comprobante vacío por ahora
-
-        # Si la línea contiene CUIT Destino o Originante, la agregamos al último movimiento
-        elif movimientos and detalle_extra_regex.search(line):
-            movimientos[-1][1] += " " + line  
+    
+    # Extrae bloques que comienzan con fecha y terminan con '*' (modo DOTALL para abarcar saltos de línea)
+    bloque_pattern = re.compile(r"(\d{1,2}/\d{1,2}/\d{4}.*?\*)", re.DOTALL)
+    bloques = bloque_pattern.findall(texto)
+    
+    # Patrón para extraer los campos de cada movimiento.
+    # Se asume que los números tienen formato: miles con punto y decimales con coma, ej. 4.222,20 o 0,00
+    movimiento_pattern = re.compile(
+        r"^(?P<fecha>\d{1,2}/\d{1,2}/\d{4})\s+"
+        r"(?P<rest>.+?)\s+"
+        r"(?P<debito>\d{1,3}(?:[.,]\d{3})*,\d{2}|0,00)\s+"
+        r"(?P<credito>\d{1,3}(?:[.,]\d{3})*,\d{2}|0,00)\s+"
+        r"(?P<saldo>\d{1,3}(?:[.,]\d{3})*,\d{2})\s+\*$",
+        re.DOTALL
+    )
+    
+    detalle_extra_regex = re.compile(r"(CUIT Destino:|Originante:)")
+    
+    for bloque in bloques:
+        # Reemplazamos saltos de línea por espacios para trabajar con el bloque en una sola línea
+        bloque = bloque.strip().replace("\n", " ")
+        m = movimiento_pattern.match(bloque)
+        if m:
+            fecha = m.group("fecha")
+            rest = m.group("rest").strip()
+            debito_str = m.group("debito")
+            credito_str = m.group("credito")
+            saldo_str = m.group("saldo")
+            
+            # Función para convertir el formato numérico
+            def conv(num_str):
+                return float(num_str.replace(".", "").replace(",", "."))
+            
+            debito = conv(debito_str) if debito_str != "0,00" else None
+            credito = conv(credito_str) if credito_str != "0,00" else None
+            saldo = conv(saldo_str)
+            
+            # Intentamos separar un comprobante (última palabra numérica) del detalle, si existe
+            parts = rest.rsplit(" ", 1)
+            if len(parts) == 2 and parts[1].isdigit():
+                detalle = parts[0]
+                comprobante = parts[1]
+            else:
+                detalle = rest
+                comprobante = ""
+            
+            movimientos.append([fecha, detalle, comprobante, debito, credito, saldo])
+        else:
+            # Si el bloque no coincide con el patrón, pero contiene datos extra (como CUIT Destino u Originante),
+            # se añade al detalle del último movimiento (si existe)
+            if movimientos and detalle_extra_regex.search(bloque):
+                movimientos[-1][1] += " " + bloque
 
     print(f"Total de movimientos extraídos: {len(movimientos)}")
     return movimientos
